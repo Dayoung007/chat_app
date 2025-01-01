@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "429165296790",
+    "project_id": "chatapp-8522f",
+    "storage_bucket": "chatapp-8522f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:429165296790:android:2ddb26dd51a209672f16b7",
+        "android_client_info": {
+          "package_name": "com.tiano.chapapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQFiDZzlHRNklCJUTz8DabdJ3ilQ6SE5Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
