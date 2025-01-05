@@ -25,7 +25,6 @@ class _UserInformationScreenState extends State<UserInformationScreen> {
         onFail: (String message) {
           showSnackBar(context, message);
         });
-
     // crop image
     cropImage(finalFileImage?.path);
   }
@@ -34,7 +33,6 @@ class _UserInformationScreenState extends State<UserInformationScreen> {
     if (filePath != null) {
       CroppedFile? croppedFile = await ImageCropper().cropImage(
           sourcePath: filePath, maxHeight: 800, maxWidth: 800, compressQuality: 90);
-
       popTheDialog();
       if (croppedFile != null) {
         setState(() {

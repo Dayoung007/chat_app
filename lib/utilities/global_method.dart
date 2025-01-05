@@ -10,44 +10,24 @@ void showSnackBar(BuildContext context, String message) {
   ));
 }
 
-//pick image from gallery or camera
 
 Future<File?> pickImage(
-    {
-    required bool fromCamera,
-    required Function(String) onFail}) async {
+    {required bool fromCamera, required Function(String) onFail}) async {
   File? fileImage;
-
-    if (fromCamera) {
-      //get from camera
-      try {
-        final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
-        if (pickedFile == null) {
-          onFail('Failed to get image');
-          return null;
-        } else {
-          fileImage = File(pickedFile.path);
-        }
-      } catch (e) {
-        onFail('Failed to get image from camera');
-        return null;
-      }
+  try {
+    final pickedFile = await ImagePicker()
+        .pickImage(source: fromCamera ? ImageSource.camera : ImageSource.gallery);
+    if (pickedFile == null) {
+      onFail('Failed to get image');
+      return null;
     } else {
-      //get from gallery
-      try {
-        final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-        if (pickedFile == null) {
-          onFail('Failed to get image');
-          return null;
-        } else {
-          fileImage = File(pickedFile.path);
-        }
-      } catch (e) {
-        onFail('Failed to get image from gallery');
-        return null;
-      }
+      fileImage = File(pickedFile.path);
     }
-
-    return fileImage;
+  } catch (e) {
+    onFail(fromCamera
+        ? 'Failed to get image from camera'
+        : 'Failed to get image from gallery');
+    return null;
   }
-
+  return fileImage;
+}
