@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:new_chat_app/authentication/login_screen.dart';
 import 'package:new_chat_app/authentication/otp_screen.dart';
 import 'package:new_chat_app/authentication/user_information_screen.dart';
+import 'package:new_chat_app/constant.dart';
 import 'package:new_chat_app/providers/authentication_provider.dart';
 import 'package:provider/provider.dart';
+
+import 'main_screen/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,11 +16,13 @@ void main() async {
     providers: [
       ChangeNotifierProvider(create: (_) => AuthenticationProvider()),
     ],
-    child: MyApp(),
+    child: const MyApp(),
   ));
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -26,7 +31,16 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const UserInformationScreen(),
+      initialRoute: Constants.userInformationScreen,
+      routes: {
+
+        Constants.loginScreen: (context) => const LoginScreen(),
+        Constants.otpScreen: (context) => const OtpScreen(),
+        Constants.userInformationScreen: (context) => const UserInformationScreen(),
+        Constants.homeScreen: (context) => const HomeScreen(),
+
+      }
+
     );
   }
 }

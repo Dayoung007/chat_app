@@ -12,6 +12,19 @@ class Constants {
   static String friendUids = 'friendUids';
   static String friendRequestUids = 'friendRequestUids';
   static String sentFriendRequestUids = 'sentFriendRequestUids';
+  static String users = 'users';
+  static String verificationId = 'verificationId';
+  static const String userModel = 'userModel';
+
+
+  //screen routes
+  static String loginScreen = '/loginScreen';
+  static String homeScreen = '/';
+  static String userInformationScreen = '/userInformationScreen';
+  static String otpScreen = '/otpScreen';
+
+
+
 
 
 

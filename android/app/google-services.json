@@ -1,26 +1,139 @@
 {
   "project_info": {
-    "project_number": "429165296790",
-    "project_id": "chatapp-8522f",
-    "storage_bucket": "chatapp-8522f.firebasestorage.app"
+    "project_number": "669054276512",
+    "project_id": "tofunmi-ecomerce-app",
+    "storage_bucket": "tofunmi-ecomerce-app.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:429165296790:android:2ddb26dd51a209672f16b7",
+        "mobilesdk_app_id": "1:669054276512:android:00e04e849472517a7ccac5",
         "android_client_info": {
-          "package_name": "com.tiano.chapapp"
+          "package_name": "com.example.vendordash"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "669054276512-1g73ue2le8mvqdcuum8l0agcrmn5g65j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyAQFiDZzlHRNklCJUTz8DabdJ3ilQ6SE5Y"
+          "current_key": "AIzaSyD-oMpTQk0_N3-nePxxEnh8gkvEKv2zasU"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "669054276512-1g73ue2le8mvqdcuum8l0agcrmn5g65j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669054276512:android:e7890cd4b124ee017ccac5",
+        "android_client_info": {
+          "package_name": "com.tiano.chapapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "669054276512-6ieeqcgkm4trv9n32t810qa08f30btan.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tiano.chapapp",
+            "certificate_hash": "9b97c7823622638ee45fb699aa347910f8f0bec4"
+          }
+        },
+        {
+          "client_id": "669054276512-1g73ue2le8mvqdcuum8l0agcrmn5g65j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-oMpTQk0_N3-nePxxEnh8gkvEKv2zasU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "669054276512-1g73ue2le8mvqdcuum8l0agcrmn5g65j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669054276512:android:a18318f3daa9947a7ccac5",
+        "android_client_info": {
+          "package_name": "com.tiano.tofunmi_ecommerce_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "669054276512-d08oah2nin5lpjoujffv9s39a67llpbp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tiano.tofunmi_ecommerce_app",
+            "certificate_hash": "9b97c7823622638ee45fb699aa347910f8f0bec4"
+          }
+        },
+        {
+          "client_id": "669054276512-1g73ue2le8mvqdcuum8l0agcrmn5g65j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-oMpTQk0_N3-nePxxEnh8gkvEKv2zasU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "669054276512-1g73ue2le8mvqdcuum8l0agcrmn5g65j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669054276512:android:559a2426279b66047ccac5",
+        "android_client_info": {
+          "package_name": "com.tofunmi.vendor_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "669054276512-1g73ue2le8mvqdcuum8l0agcrmn5g65j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-oMpTQk0_N3-nePxxEnh8gkvEKv2zasU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "669054276512-1g73ue2le8mvqdcuum8l0agcrmn5g65j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

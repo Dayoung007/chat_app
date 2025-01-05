@@ -2,6 +2,7 @@ import 'package:new_chat_app/constant.dart';
 
 class UserModel {
   String name;
+  String uid;
   String phoneNumber;
   String image;
   String token;
@@ -15,6 +16,7 @@ class UserModel {
 
   UserModel(
       {required this.name,
+        required this.uid,
       required this.phoneNumber,
       required this.image,
       required this.token,
@@ -27,9 +29,10 @@ class UserModel {
       required this.sentFriendRequestUids});
 
 //from map
-factory UserModel.fromMap(Map<String, dynamic>map) =>
+factory UserModel.fromMap(Map<String, dynamic> map) =>
   UserModel(
     name: map[Constants.name] ?? '',
+    uid: map[Constants.uid] ?? '',
     phoneNumber: map[Constants.phoneNumber] ?? '',
     image: map[Constants.image] ?? '',
     token: map[Constants.token] ?? '',
@@ -37,15 +40,18 @@ factory UserModel.fromMap(Map<String, dynamic>map) =>
     lastSeen: map[Constants.lastSeen] ?? '',
     createdAt: map[Constants.createdAt] ?? '',
     isOnline: map[Constants.isOnline] ?? false,
-    friendUids: map[Constants.friendUids] ?? '',
-    friendRequestUids: map[Constants.friendRequestUids] ?? '',
-    sentFriendRequestUids: map[Constants.sentFriendRequestUids] ?? '',
+    friendUids: List<String>.from(map[Constants.friendUids] ?? []),
+    friendRequestUids: List<String>.from(map[Constants.friendRequestUids] ?? []),
+    sentFriendRequestUids: List<String>.from(map[Constants.sentFriendRequestUids] ?? []),
   );
+
+  
 
   //to map
 Map<String, dynamic> toMap() {
   return {
     Constants.name: name,
+    Constants.uid: uid,
     Constants.phoneNumber: phoneNumber,
     Constants.image: image,
     Constants.token: token,

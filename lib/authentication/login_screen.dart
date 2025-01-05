@@ -15,7 +15,6 @@ class LoginScreen extends StatefulWidget {
 
 final TextEditingController _phoneNumberController = TextEditingController();
 
-
 class _LoginScreenState extends State<LoginScreen> {
   Country selectedCountry = Country(
     phoneCode: '234',
@@ -29,7 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
     displayNameNoCountryCode: 'NG',
     e164Key: '',
   );
-
 
   @override
   void dispose() {
@@ -119,34 +117,32 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   suffixIcon: _phoneNumberController.text.length > 9
-                      ? _authProvider.isLoading ? CircularProgressIndicator() :
-
-
-                  InkWell(
-                    onTap: () {
-                      // In the onTap method of your InkWell
-
-                        final phoneNumber = '+${selectedCountry.phoneCode}${_phoneNumberController.text}';
-                        _authProvider.signInWithPhoneNumber(phoneNumber: phoneNumber, context: context);
-
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 10,
-                      ),
-                      decoration: const BoxDecoration(shape: BoxShape.circle),
-                      child: Icon(
-                        _phoneNumberController.text.length > 10
-                            ? Icons.cancel
-                            : Icons.check_circle_rounded,
-                        size: 35,
-                        color: _phoneNumberController.text.length > 10
-                            ? Colors.red
-                            : Colors.green,
-                      ),
-                    ),
-                  )
+                      ? _authProvider.isLoading
+                          ? CircularProgressIndicator()
+                          : InkWell(
+                              onTap: () {
+                                final phoneNumber =
+                                    '+${selectedCountry.phoneCode}${_phoneNumberController.text}';
+                                _authProvider.signInWithPhoneNumber(
+                                    phoneNumber: phoneNumber, context: context);
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 10,
+                                ),
+                                decoration: const BoxDecoration(shape: BoxShape.circle),
+                                child: Icon(
+                                  _phoneNumberController.text.length > 10
+                                      ? Icons.cancel
+                                      : Icons.check_circle_rounded,
+                                  size: 35,
+                                  color: _phoneNumberController.text.length > 10
+                                      ? Colors.red
+                                      : Colors.green,
+                                ),
+                              ),
+                            )
                       : null,
                 ),
               ),

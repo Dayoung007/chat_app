@@ -1,11 +1,53 @@
-
-
 //show snack bar method
-import 'package:flutter/material.dart';
+import 'dart:io';
 
-void showSnackBar(BuildContext context,String message){
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+void showSnackBar(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
     content: Text(message),
-
   ));
 }
+
+//pick image from gallery or camera
+
+Future<File?> pickImage(
+    {
+    required bool fromCamera,
+    required Function(String) onFail}) async {
+  File? fileImage;
+
+    if (fromCamera) {
+      //get from camera
+      try {
+        final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
+        if (pickedFile == null) {
+          onFail('Failed to get image');
+          return null;
+        } else {
+          fileImage = File(pickedFile.path);
+        }
+      } catch (e) {
+        onFail('Failed to get image from camera');
+        return null;
+      }
+    } else {
+      //get from gallery
+      try {
+        final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+        if (pickedFile == null) {
+          onFail('Failed to get image');
+          return null;
+        } else {
+          fileImage = File(pickedFile.path);
+        }
+      } catch (e) {
+        onFail('Failed to get image from gallery');
+        return null;
+      }
+    }
+
+    return fileImage;
+  }
+
