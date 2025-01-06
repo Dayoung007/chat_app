@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      initialRoute: Constants.userInformationScreen,
+      initialRoute: Constants.loginScreen,
       routes: {
 
         Constants.loginScreen: (context) => const LoginScreen(),

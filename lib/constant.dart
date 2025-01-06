@@ -15,6 +15,7 @@ class Constants {
   static String users = 'users';
   static String verificationId = 'verificationId';
   static const String userModel = 'userModel';
+  static const String userImages = 'userImages';
 
 
   //screen routes

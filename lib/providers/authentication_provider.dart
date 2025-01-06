@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,14 +13,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthenticationProvider extends ChangeNotifier {
   bool _isLoading = false;
-  bool _isSeccessful = false;
+  bool _isSuccessful = false;
   String? _uid;
   String? _phoneNumber;
   UserModel? _userModel;
 
   bool get isLoading => _isLoading;
 
-  bool get isSeccessful => _isSeccessful;
+  bool get isSuccessful => _isSuccessful;
 
   String? get uid => _uid;
 
@@ -47,24 +48,27 @@ class AuthenticationProvider extends ChangeNotifier {
     try {
       DocumentSnapshot documentSnapshot =
           await _firestore.collection(Constants.users).doc(_uid).get();
-      
+
       if (!documentSnapshot.exists) {
         print("User document does not exist for uid: $_uid");
         return;
       }
-  
+
       var data = documentSnapshot.data();
       if (data == null) {
         print("Document data is null for uid: $_uid");
         return;
       }
-  
+
       if (data is! Map<String, dynamic>) {
         print("Unexpected data type: ${data.runtimeType}");
         return;
       }
-  
+
       _userModel = UserModel.fromMap(data);
+      print('this is the $data');
+
+
       notifyListeners();
     } catch (e) {
       print("Error getting user data from Firestore: $e");
@@ -80,7 +84,7 @@ class AuthenticationProvider extends ChangeNotifier {
       Constants.userModel,
       jsonEncode(
         _userModel?.toMap(),
-       ),
+      ),
     );
   }
 
@@ -105,7 +109,7 @@ class AuthenticationProvider extends ChangeNotifier {
         },
         verificationFailed: (FirebaseAuthException e) {
           _isLoading = false;
-          _isSeccessful = false;
+          _isSuccessful = false;
           notifyListeners();
           showSnackBar(context, e.message!);
         },
@@ -122,7 +126,7 @@ class AuthenticationProvider extends ChangeNotifier {
       );
     } catch (e) {
       _isLoading = false;
-      _isSeccessful = false;
+      _isSuccessful = false;
       notifyListeners();
     }
   }
@@ -152,13 +156,13 @@ class AuthenticationProvider extends ChangeNotifier {
       if (user != null) {
         _uid = user.uid;
         _phoneNumber = user.phoneNumber;
-        _isSeccessful = true;
+        _isSuccessful = true;
         onSuccess();
       } else {
         throw Exception('User is null after signing in.');
       }
     } catch (error) {
-      _isSeccessful = false;
+      _isSuccessful = false;
       print("Error type: ${error.runtimeType}, message: ${error.toString()}");
 
       if (error is FirebaseAuthException) {
@@ -172,5 +176,53 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
+//sign user data to firestore
+  void saveUserDataToFirestore({
+    required UserModel userModel,
+    required File? fileImage,
+    required Function onSuccess,
+    required Function onFail,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      if (fileImage != null) {
+        String imageUrl = await storeFileToStorage(
+            file: fileImage, reference: '${Constants.userImages}/${userModel.uid}');
+        userModel.image = imageUrl;
+      }
+      userModel.lastSeen = DateTime.now().millisecondsSinceEpoch.toString();
+      userModel.createdAt = DateTime.now().millisecondsSinceEpoch.toString();
 
+      _userModel = userModel;
+
+      ///save user data to firestore
+
+      await _firestore
+          .collection(Constants.users)
+          .doc(userModel.uid)
+          .set(userModel.toMap());
+      _isLoading = false;
+      onSuccess();
+      notifyListeners();
+    } on FirebaseException catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      onFail(e.toString());
+    }
+
+    await _firestore
+        .collection(Constants.users)
+        .doc(userModel.uid)
+        .set(userModel.toMap());
+  }
+
+// store image to storage and returen file url
+  Future<String> storeFileToStorage(
+      {required File file, required String reference}) async {
+    UploadTask uploadTask = _storage.ref().child(reference).putFile(file);
+    TaskSnapshot taskSnapshot = await uploadTask;
+    String fileUrl = await taskSnapshot.ref.getDownloadURL();
+    return fileUrl;
+  }
 }

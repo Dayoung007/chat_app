@@ -2,8 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
-import '../utilities/assets_manager.dart';
-import '../utilities/global_method.dart';
+import 'package:new_chat_app/constant.dart';
+import 'package:new_chat_app/models/user_model.dart';
+import 'package:new_chat_app/providers/authentication_provider.dart';
+import 'package:new_chat_app/widget/display_user_image.dart';
+import 'package:provider/provider.dart';
+import 'package:new_chat_app/utilities/global_method.dart';
 
 class UserInformationScreen extends StatefulWidget {
   const UserInformationScreen({super.key});
@@ -26,10 +30,14 @@ class _UserInformationScreenState extends State<UserInformationScreen> {
           showSnackBar(context, message);
         });
     // crop image
-    cropImage(finalFileImage?.path);
+    await cropImage(finalFileImage?.path);
+    popContext();
+  }
+  void popContext() {
+    Navigator.of(context).pop();
   }
 
-  void cropImage(filePath) async {
+  Future<void> cropImage(filePath) async {
     if (filePath != null) {
       CroppedFile? croppedFile = await ImageCropper().cropImage(
           sourcePath: filePath, maxHeight: 800, maxWidth: 800, compressQuality: 90);
@@ -57,7 +65,9 @@ class _UserInformationScreenState extends State<UserInformationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('User Information'), ),
+      appBar: AppBar(
+        title: const Text('User Information'),
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -68,75 +78,18 @@ class _UserInformationScreenState extends State<UserInformationScreen> {
           children: [
             Center(
               child: finalFileImage != null
-                  ? Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(200),
-                          clipBehavior: Clip.antiAlias,
-                          child: Image.file(
-                            finalFileImage!,
-                            width: 100,
-                            height: 100,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: InkWell(
-                            onTap: () {
-                              buildShowModalBottomSheet(context);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: const Icon(
-                                Icons.camera_alt_rounded,
-                                size: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        )
-                      ],
+                  ? DisplayUserImage(
+                      onPress: () {
+                        buildShowModalBottomSheet(context);
+                      },
+                      isImageFile: true,
+                      finalFileImage: finalFileImage,
                     )
-                  : Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(200),
-                          clipBehavior: Clip.antiAlias,
-                          child: Image.asset(
-                            AssetsManager.userImage,
-                            width: 100,
-                            height: 100,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: InkWell(
-                            onTap: () {
-                              buildShowModalBottomSheet(context);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: const Icon(
-                                Icons.camera_alt_rounded,
-                                size: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        )
-                      ],
+                  : DisplayUserImage(
+                      onPress: () {
+                        buildShowModalBottomSheet(context);
+                      },
+                      isImageFile: false,
                     ),
             ),
             const SizedBox(height: 48),
@@ -151,7 +104,15 @@ class _UserInformationScreenState extends State<UserInformationScreen> {
             ),
             const SizedBox(height: 24),
             AppButton(
-              action: () {},
+              action: () {
+                if (_nameController.text.isEmpty || _nameController.text.length < 3) {
+                  showSnackBar(context, 'Name should be at least 3 characters long');
+                  return;
+                } else {
+                  saveUserDataToFirestore();
+                }
+                //save the user to firestore
+              },
               buttonText: 'Continue',
               textColor: Colors.white,
               buttonBackground: Colors.blueAccent,
@@ -164,8 +125,7 @@ class _UserInformationScreenState extends State<UserInformationScreen> {
 
   Future<dynamic> buildShowModalBottomSheet(BuildContext context) {
     return showModalBottomSheet(
-      showDragHandle: true,
-
+        showDragHandle: true,
         backgroundColor: Colors.white,
         elevation: 10,
         context: context,
@@ -176,7 +136,6 @@ class _UserInformationScreenState extends State<UserInformationScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-
                 SizedBox(height: 10),
                 ListTile(
                   onTap: () {
@@ -196,6 +155,44 @@ class _UserInformationScreenState extends State<UserInformationScreen> {
             ),
           );
         });
+  }
+
+  // save user data to firestore
+  Future<void> saveUserDataToFirestore() async {
+    final _authProvider = context.read<AuthenticationProvider>();
+    UserModel userModel = UserModel(
+        name: _nameController.text.trim(),
+        uid: _authProvider.uid!,
+        phoneNumber: _authProvider.phoneNumber!,
+        image: '',
+        token: '',
+        aboutMe: 'Hey there, i am using this application',
+        lastSeen: '',
+        createdAt: '',
+        isOnline: true,
+        friendUids: [],
+        friendRequestUids: [],
+        sentFriendRequestUids: []);
+
+    _authProvider.saveUserDataToFirestore(
+        userModel: userModel,
+        fileImage: finalFileImage,
+        onSuccess: () async {
+          showSnackBar(context, 'User data saved successfully');
+          await Future.delayed(const Duration(seconds: 1));
+          await _authProvider.saveUserDataToSharedPreferences();
+          navigateToHomeScreen();
+        },
+        onFail: () async {
+          showSnackBar(context, 'Failed to save user data');
+          await Future.delayed(const Duration(seconds: 1));
+        });
+  }
+
+  void navigateToHomeScreen() {
+    // Navigate to home screen and remove all routes
+
+    Navigator.of(context).pushNamedAndRemoveUntil(Constants.homeScreen, (route) => false);
   }
 }
 
