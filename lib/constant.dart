@@ -23,6 +23,10 @@ class Constants {
   static String homeScreen = '/';
   static String userInformationScreen = '/userInformationScreen';
   static String otpScreen = '/otpScreen';
+  static String landingScreen = '/landingScreen';
+  static String forgotPasswordScreen = '/forgotPasswordScreen';
+  static String chatScreen = '/chatScreen';
+  static String profileScreen = '/profileScreen';
 
 
 

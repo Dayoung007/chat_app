@@ -17,6 +17,9 @@ class AuthenticationProvider extends ChangeNotifier {
   String? _uid;
   String? _phoneNumber;
   UserModel? _userModel;
+  bool? _isSuccessfulOtp;
+
+  bool? get isSuccessfulOtp => _isSuccessfulOtp;
 
   bool get isLoading => _isLoading;
 
@@ -31,6 +34,23 @@ class AuthenticationProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  //check authentication state
+  Future<bool> checkAuthenticationState() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      _uid = user.uid;
+      _phoneNumber = user.phoneNumber;
+      await getUserDataFromFirestore();
+      await saveUserDataToSharedPreferences();
+      return true;
+    } else {
+      _uid = null;
+      _phoneNumber = null;
+      _userModel = null;
+      return false;
+    }
+  }
 
   //check if user exists
   Future<bool> isUserExists() async {
@@ -68,7 +88,6 @@ class AuthenticationProvider extends ChangeNotifier {
       _userModel = UserModel.fromMap(data);
       print('this is the $data');
 
-
       notifyListeners();
     } catch (e) {
       print("Error getting user data from Firestore: $e");
@@ -76,7 +95,7 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
-  //save user data to shared preferences
+  ///save user data to shared preferences
 
   Future<void> saveUserDataToSharedPreferences() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -113,22 +132,39 @@ class AuthenticationProvider extends ChangeNotifier {
           notifyListeners();
           showSnackBar(context, e.message!);
         },
-        codeSent: (String verificationId, int? resendToken) {
+        codeSent: (String verificationId, int? resendToken) async {
           _isLoading = false;
+          _isSuccessfulOtp = false;
           notifyListeners();
-          print('navigate to OTP verification screen');
+          showSnackBar(context, 'navigate to OTP verification screen');
+
           Navigator.of(context).pushNamed(Constants.otpScreen, arguments: {
             Constants.phoneNumber: phoneNumber,
             Constants.verificationId: verificationId,
           });
         },
-        codeAutoRetrievalTimeout: (String verificationId) {},
+        codeAutoRetrievalTimeout: (String verificationId) {
+          _isLoading = false;
+          _isSuccessful = false;
+          _isSuccessfulOtp = false;
+          notifyListeners();
+        },
       );
     } catch (e) {
       _isLoading = false;
+      _isSuccessfulOtp = false;
       _isSuccessful = false;
       notifyListeners();
     }
+  }
+
+  void navigateToTheOtpScreen (BuildContext context, String verificationId,){
+
+  }
+
+  Future<void> checkInitialOtpState() async {
+    _isSuccessfulOtp = true;
+    notifyListeners();
   }
 
   Future<void> verifyOtpCode({
@@ -139,6 +175,8 @@ class AuthenticationProvider extends ChangeNotifier {
   }) async {
     try {
       _isLoading = true;
+      _isSuccessful = false;
+      _isSuccessfulOtp = false;
       notifyListeners();
 
       final credential = PhoneAuthProvider.credential(
@@ -147,9 +185,6 @@ class AuthenticationProvider extends ChangeNotifier {
       );
 
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      print('UserCredential runtimeType: ${userCredential.runtimeType}');
-      print('User: ${userCredential.user}');
-      print('AdditionalUserInfo: ${userCredential.additionalUserInfo}');
 
       // Access the user details safely
       final User? user = userCredential.user;
@@ -157,22 +192,64 @@ class AuthenticationProvider extends ChangeNotifier {
         _uid = user.uid;
         _phoneNumber = user.phoneNumber;
         _isSuccessful = true;
+        _isSuccessfulOtp = true;
+        notifyListeners();
         onSuccess();
       } else {
         throw Exception('User is null after signing in.');
       }
     } catch (error) {
       _isSuccessful = false;
-      print("Error type: ${error.runtimeType}, message: ${error.toString()}");
+      _isSuccessfulOtp = false;
+
+      showSnackBar(
+          context, "Error type: ${error.runtimeType}, message: ${error.toString()}");
 
       if (error is FirebaseAuthException) {
         showSnackBar(context, 'Firebase Auth Error: ${error.message}');
       } else {
         showSnackBar(context, 'Unexpected Error: ${error.toString()}');
       }
+      notifyListeners();
     } finally {
       _isLoading = false;
+      _isSuccessfulOtp = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> resendOtp({
+    required String phoneNumber,
+    required BuildContext context,
+  }) async {
+    try {
+      _isLoading = false;
+      _isSuccessfulOtp = false;
+      notifyListeners();
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        verificationCompleted: (PhoneAuthCredential credential) {
+          // Handle automatic verification
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          // Handle verification failure
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Verification failed: ${e.message}')),
+          );
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          // Save the verification ID for later use
+          // You might want to update the state or notify listeners here
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          // Handle timeout
+        },
+      );
+    } catch (e) {
+      // Handle any errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 
@@ -224,5 +301,19 @@ class AuthenticationProvider extends ChangeNotifier {
     TaskSnapshot taskSnapshot = await uploadTask;
     String fileUrl = await taskSnapshot.ref.getDownloadURL();
     return fileUrl;
+  }
+
+  // get user stream
+  Stream<DocumentSnapshot> usersStream({required String userId}) =>
+      _firestore.collection(Constants.users).doc(userId).snapshots();
+
+  Future<void> logout() async {
+    await _auth.signOut();
+    _uid = null;
+    _phoneNumber = null;
+    _userModel = null;
+    SharedPreferences shared = await SharedPreferences.getInstance();
+    await shared.clear();
+    notifyListeners();
   }
 }

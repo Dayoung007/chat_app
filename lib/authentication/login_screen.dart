@@ -29,11 +29,13 @@ class _LoginScreenState extends State<LoginScreen> {
     e164Key: '',
   );
 
+
+
   @override
   void dispose() {
     // TODO: implement dispose
     super.dispose();
-    _phoneNumberController.dispose();
+    _phoneNumberController.clear();
   }
 
   @override
@@ -121,10 +123,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? CircularProgressIndicator()
                           : InkWell(
                               onTap: () {
-                                final phoneNumber =
-                                    '+${selectedCountry.phoneCode}${_phoneNumberController.text}';
-                                _authProvider.signInWithPhoneNumber(
-                                    phoneNumber: phoneNumber, context: context);
+                                if (_phoneNumberController.text.length > 10) {
+                                } else {
+                                  final phoneNumber =
+                                      '+${selectedCountry.phoneCode}${_phoneNumberController.text}';
+                                  _authProvider.signInWithPhoneNumber(
+                                      phoneNumber: phoneNumber, context: context);
+                                }
                               },
                               child: Container(
                                 margin: const EdgeInsets.symmetric(

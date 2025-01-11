@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:new_chat_app/constant.dart';
 import 'package:new_chat_app/providers/authentication_provider.dart';
+import 'package:new_chat_app/utilities/global_method.dart';
 import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +18,10 @@ class _OtpScreenState extends State<OtpScreen> {
   final focusNode = FocusNode();
   String? otpCode;
 
+
+
+
+
   @override
   void dispose() {
     _textEditingController.dispose();
@@ -27,10 +32,7 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     //get arguments
-    final args = ModalRoute
-        .of(context)!
-        .settings
-        .arguments as Map;
+    final args = ModalRoute.of(context)!.settings.arguments as Map;
     final verificationId = args[Constants.verificationId] as String;
     final phoneNumber = args[Constants.phoneNumber] as String;
     final authProvider = context.watch<AuthenticationProvider>();
@@ -76,7 +78,8 @@ class _OtpScreenState extends State<OtpScreen> {
             const SizedBox(height: 16),
             authProvider.isLoading
                 ? const CircularProgressIndicator()
-                : SizedBox(
+                : authProvider.isSuccessfulOtp == false
+                    ?  SizedBox(
               height: 68,
               child: Pinput(
                   focusedPinTheme: defaultPinnedTheme.copyWith(
@@ -91,17 +94,18 @@ class _OtpScreenState extends State<OtpScreen> {
                   length: 6,
                   controller: TextEditingController(),
                   focusNode: focusNode,
-                  onCompleted: (pin) {
+                  onCompleted: (pin) async {
                     setState(() {
                       otpCode = pin;
-
                     });
+
 
                     verifyOtpCode(
                       otpCode: otpCode!,
                       verificationId: verificationId,
 
                     );
+                    await Future.delayed(Duration(seconds: 2));
                   },
                   keyboardType: TextInputType.number,
                   onChanged: (value) {
@@ -120,20 +124,32 @@ class _OtpScreenState extends State<OtpScreen> {
                             color: Colors.red,
                           ),
                           color: Colors.red.withAlpha(128)))),
-            ),
+            ) :
+
+
+            CircleAvatar(
+                        backgroundColor: Colors.green,
+                        radius: 20,
+                        child: Icon(Icons.check,
+                        color: Colors.white,),
+                      )
+                    ,
             const SizedBox(
               height: 32,
             ),
-            const Text('Did not receive code?'),
-            TextButton(
-              onPressed: () {},
-              child: Text(
-                'Resend Code',
-                style: GoogleFonts.openSans(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+          Text('Did not receive code?'),
+            const SizedBox(
+              height: 16,
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Call the resendOtp method
+                context.read<AuthenticationProvider>().resendOtp(
+                  phoneNumber: phoneNumber,
+                  context: context,
+                );
+              },
+              child: Text('Resend OTP'),
             ),
           ]),
         ),
@@ -151,44 +167,35 @@ class _OtpScreenState extends State<OtpScreen> {
       otpCode: otpCode,
       context: context,
       onSuccess: () async {
-
         bool userExists = await authProvider.isUserExists();
-
-        print("User exists: $userExists");
         if (userExists) {
-          print("Fetching user data from Firestore");
+          showSnackBar(context, "Fetching user data from Firestore");
           await authProvider.getUserDataFromFirestore();
-          print("Saving user data to SharedPreferences");
+          showSnackBar(context, "Saving user data to SharedPreferences");
           await authProvider.saveUserDataToSharedPreferences();
+          await authProvider.checkInitialOtpState();
           await navigateToScreen(userExists: true);
         } else {
-           await navigateToScreen(userExists: false);
+          await authProvider.checkInitialOtpState();
+          await navigateToScreen(userExists: false);
         }
       },
     );
   }
 
-
   Future<void> navigateToScreen({required bool userExists}) async {
-  
     try {
-      if (userExists) {
-        print("Attempting to navigate to home screen");
-        await Navigator.pushNamedAndRemoveUntil(
-          context,
-          Constants.homeScreen,
-          (route) => false,
-        );
-        print("Navigation to home screen successful");
-      } else {
-        print("Attempting to navigate to user information screen");
-        await Navigator.pushNamedAndRemoveUntil(
-          context,
-          Constants.userInformationScreen,
-          (route) => false,
-        );
-        print("Navigation to user information screen successful");
-      }
+      userExists
+          ? await Navigator.pushNamedAndRemoveUntil(
+              context,
+              Constants.homeScreen,
+              (route) => false,
+            )
+          : await Navigator.pushNamedAndRemoveUntil(
+              context,
+              Constants.userInformationScreen,
+              (route) => false,
+            );
     } catch (e) {
       print("Navigation error: $e");
       // You might want to show an error dialog here
@@ -196,8 +203,8 @@ class _OtpScreenState extends State<OtpScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text("Navigation Error"),
-          content: const Text(
-              "An error occurred while trying to navigate. Please try again."),
+          content:
+              const Text("An error occurred while trying to navigate. Please try again."),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),

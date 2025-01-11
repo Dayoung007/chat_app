@@ -5,6 +5,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:new_chat_app/constant.dart';
 import 'package:new_chat_app/models/user_model.dart';
 import 'package:new_chat_app/providers/authentication_provider.dart';
+import 'package:new_chat_app/widget/app_button.dart';
 import 'package:new_chat_app/widget/display_user_image.dart';
 import 'package:provider/provider.dart';
 import 'package:new_chat_app/utilities/global_method.dart';
@@ -30,14 +31,14 @@ class _UserInformationScreenState extends State<UserInformationScreen> {
           showSnackBar(context, message);
         });
     // crop image
-    await cropImage(finalFileImage?.path);
-    popContext();
+    cropImage(finalFileImage?.path);
+    
   }
   void popContext() {
     Navigator.of(context).pop();
   }
 
-  Future<void> cropImage(filePath) async {
+void cropImage(filePath) async {
     if (filePath != null) {
       CroppedFile? croppedFile = await ImageCropper().cropImage(
           sourcePath: filePath, maxHeight: 800, maxWidth: 800, compressQuality: 90);
@@ -196,43 +197,4 @@ class _UserInformationScreenState extends State<UserInformationScreen> {
   }
 }
 
-class AppButton extends StatelessWidget {
-  const AppButton(
-      {Key? key,
-      required this.action,
-      required this.buttonText,
-      required this.buttonBackground,
-      required this.textColor,
-      this.splashColor})
-      : super(key: key);
 
-  final Function()? action;
-  final String buttonText;
-  final Color buttonBackground;
-  final Color textColor;
-  final Color? splashColor;
-
-  @override
-  Widget build(BuildContext context) {
-    // Button splash color
-    Color buttonSplashColor = splashColor ?? buttonBackground;
-    // Return button component
-    return TextButton(
-      onPressed: action,
-      style: ButtonStyle(
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          overlayColor: WidgetStatePropertyAll(buttonSplashColor)),
-      child: Container(
-        alignment: Alignment.center,
-        height: 44,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-          color: buttonBackground,
-        ),
-        child: Text(buttonText,
-            style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.w500),
-            textAlign: TextAlign.center),
-      ),
-    );
-  }
-}

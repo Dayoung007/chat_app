@@ -1,11 +1,15 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:new_chat_app/constant.dart';
 import 'package:new_chat_app/main_screen/chats_list_screen.dart';
 import 'package:new_chat_app/main_screen/group_screen.dart';
 import 'package:new_chat_app/main_screen/people_screen.dart';
 import 'package:new_chat_app/main_screen/setting_screens.dart';
+import 'package:new_chat_app/providers/authentication_provider.dart';
 import 'package:new_chat_app/utilities/assets_manager.dart';
+import 'package:new_chat_app/utilities/global_method.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,16 +30,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthenticationProvider?>();
+  
+    if (authProvider == null || authProvider.getUserModel == null) {
+      return Center(child: CircularProgressIndicator());
+    }
+  
+    String image = authProvider.getUserModel!.image;
+  
     return Scaffold(
       appBar: AppBar(
         title: Text('Chat App'),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: CircleAvatar(
-              backgroundImage: AssetImage(AssetsManager.userImage),
+            child: userImageWidget(
+              imageUrl: image,
+              radius: 20,
+              onTap: () {
+                // Navigate to profile screen with uid as argument
+                Navigator.pushNamed(
+                  context,
+                  Constants.profileScreen,
+                  arguments: authProvider.getUserModel!.uid,
+                );
+              },
             ),
-          )
+          ),
         ],
       ),
       body: PageView(
