@@ -6,6 +6,7 @@ import 'package:new_chat_app/authentication/otp_screen.dart';
 import 'package:new_chat_app/authentication/user_information_screen.dart';
 import 'package:new_chat_app/constant.dart';
 import 'package:new_chat_app/main_screen/profile_screen.dart';
+import 'package:new_chat_app/main_screen/setting_screens.dart';
 import 'package:new_chat_app/providers/authentication_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         Constants.homeScreen: (context) => const HomeScreen(),
         Constants.landingScreen : (context) => const LandingScreen(),
         Constants.profileScreen : (context) => ProfileScreen(),
+        Constants.settingScreen : (context) => SettingScreens(),
 
       }
 

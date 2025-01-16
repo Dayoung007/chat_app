@@ -27,6 +27,7 @@ class Constants {
   static String forgotPasswordScreen = '/forgotPasswordScreen';
   static String chatScreen = '/chatScreen';
   static String profileScreen = '/profileScreen';
+  static String settingScreen = '/settingScreen';
 
 
 

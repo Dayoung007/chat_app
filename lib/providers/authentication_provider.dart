@@ -66,8 +66,10 @@ class AuthenticationProvider extends ChangeNotifier {
   //get user dats from firestore
   Future<void> getUserDataFromFirestore() async {
     try {
-      DocumentSnapshot documentSnapshot =
-          await _firestore.collection(Constants.users).doc(_uid).get();
+      DocumentSnapshot documentSnapshot = await _firestore
+          .collection(Constants.users)
+          .doc(_uid)
+          .get();
 
       if (!documentSnapshot.exists) {
         print("User document does not exist for uid: $_uid");
@@ -98,7 +100,8 @@ class AuthenticationProvider extends ChangeNotifier {
   ///save user data to shared preferences
 
   Future<void> saveUserDataToSharedPreferences() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    SharedPreferences sharedPreferences =
+        await SharedPreferences.getInstance();
     await sharedPreferences.setString(
       Constants.userModel,
       jsonEncode(
@@ -109,21 +112,25 @@ class AuthenticationProvider extends ChangeNotifier {
 
   //get data from shares preferences
   Future<void> getUserDataFromSharedPreferences() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    String userModelString = sharedPreferences.getString(Constants.userModel)!;
+    SharedPreferences sharedPreferences =
+        await SharedPreferences.getInstance();
+    String userModelString =
+        sharedPreferences.getString(Constants.userModel)!;
     _userModel = UserModel.fromMap(jsonDecode(userModelString));
     _uid = _userModel?.uid;
     notifyListeners();
   }
 
   Future<void> signInWithPhoneNumber(
-      {required String phoneNumber, required BuildContext context}) async {
+      {required String phoneNumber,
+      required BuildContext context}) async {
     try {
       _isLoading = true;
       notifyListeners();
       await _auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
-        verificationCompleted: (PhoneAuthCredential credential) async {
+        verificationCompleted:
+            (PhoneAuthCredential credential) async {
           await _auth.signInWithCredential(credential);
         },
         verificationFailed: (FirebaseAuthException e) {
@@ -136,9 +143,11 @@ class AuthenticationProvider extends ChangeNotifier {
           _isLoading = false;
           _isSuccessfulOtp = false;
           notifyListeners();
-          showSnackBar(context, 'navigate to OTP verification screen');
+          showSnackBar(
+              context, 'navigate to OTP verification screen');
 
-          Navigator.of(context).pushNamed(Constants.otpScreen, arguments: {
+          Navigator.of(context)
+              .pushNamed(Constants.otpScreen, arguments: {
             Constants.phoneNumber: phoneNumber,
             Constants.verificationId: verificationId,
           });
@@ -158,9 +167,10 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
-  void navigateToTheOtpScreen (BuildContext context, String verificationId,){
-
-  }
+  void navigateToTheOtpScreen(
+    BuildContext context,
+    String verificationId,
+  ) {}
 
   Future<void> checkInitialOtpState() async {
     _isSuccessfulOtp = true;
@@ -184,7 +194,8 @@ class AuthenticationProvider extends ChangeNotifier {
         smsCode: otpCode,
       );
 
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
 
       // Access the user details safely
       final User? user = userCredential.user;
@@ -202,13 +213,15 @@ class AuthenticationProvider extends ChangeNotifier {
       _isSuccessful = false;
       _isSuccessfulOtp = false;
 
-      showSnackBar(
-          context, "Error type: ${error.runtimeType}, message: ${error.toString()}");
+      showSnackBar(context,
+          "Error type: ${error.runtimeType}, message: ${error.toString()}");
 
       if (error is FirebaseAuthException) {
-        showSnackBar(context, 'Firebase Auth Error: ${error.message}');
+        showSnackBar(
+            context, 'Firebase Auth Error: ${error.message}');
       } else {
-        showSnackBar(context, 'Unexpected Error: ${error.toString()}');
+        showSnackBar(
+            context, 'Unexpected Error: ${error.toString()}');
       }
       notifyListeners();
     } finally {
@@ -234,7 +247,8 @@ class AuthenticationProvider extends ChangeNotifier {
         verificationFailed: (FirebaseAuthException e) {
           // Handle verification failure
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Verification failed: ${e.message}')),
+            SnackBar(
+                content: Text('Verification failed: ${e.message}')),
           );
         },
         codeSent: (String verificationId, int? resendToken) {
@@ -265,11 +279,14 @@ class AuthenticationProvider extends ChangeNotifier {
     try {
       if (fileImage != null) {
         String imageUrl = await storeFileToStorage(
-            file: fileImage, reference: '${Constants.userImages}/${userModel.uid}');
+            file: fileImage,
+            reference: '${Constants.userImages}/${userModel.uid}');
         userModel.image = imageUrl;
       }
-      userModel.lastSeen = DateTime.now().millisecondsSinceEpoch.toString();
-      userModel.createdAt = DateTime.now().millisecondsSinceEpoch.toString();
+      userModel.lastSeen =
+          DateTime.now().millisecondsSinceEpoch.toString();
+      userModel.createdAt =
+          DateTime.now().millisecondsSinceEpoch.toString();
 
       _userModel = userModel;
 
@@ -297,7 +314,8 @@ class AuthenticationProvider extends ChangeNotifier {
 // store image to storage and returen file url
   Future<String> storeFileToStorage(
       {required File file, required String reference}) async {
-    UploadTask uploadTask = _storage.ref().child(reference).putFile(file);
+    UploadTask uploadTask =
+        _storage.ref().child(reference).putFile(file);
     TaskSnapshot taskSnapshot = await uploadTask;
     String fileUrl = await taskSnapshot.ref.getDownloadURL();
     return fileUrl;
@@ -306,6 +324,134 @@ class AuthenticationProvider extends ChangeNotifier {
   // get user stream
   Stream<DocumentSnapshot> usersStream({required String userId}) =>
       _firestore.collection(Constants.users).doc(userId).snapshots();
+
+//send friend request
+
+  Future<void> sendFriendRequest({
+    required String friendId,
+  }) async {
+    try {
+      // add uid to friend request list
+      await _firestore
+          .collection(Constants.users)
+          .doc(friendId)
+          .update({
+        Constants.friendRequestUids: FieldValue.arrayUnion([_uid]),
+      });
+      // add uid to friend request sent list
+      await _firestore.collection(Constants.users).doc(_uid).update({
+        Constants.sentFriendRequestUids:
+            FieldValue.arrayUnion([friendId])
+      });
+      notifyListeners();
+    } on FirebaseException catch (e) {
+      print(e.message);
+    }
+  }
+
+  Future<void> acceptFriendRequest({
+    required String friendId,
+  }) async {
+    try {
+      await cancelFriendRequest(friendId: friendId);
+
+      // add uid to friend list
+      await _firestore
+          .collection(Constants.users)
+          .doc(friendId)
+          .update({
+        Constants.friendUids: FieldValue.arrayUnion([_uid])
+      });
+      // add uid to friend list
+      await _firestore.collection(Constants.users).doc(_uid).update({
+        Constants.friendUids: FieldValue.arrayUnion([friendId])
+      });
+
+      await _firestore
+          .collection(Constants.users)
+          .doc(friendId)
+          .update({
+        Constants.sentFriendRequestUids: FieldValue.arrayRemove([_uid])
+      });
+      // Remove friend's ID from current user's sent friend request list
+      await _firestore.collection(Constants.users).doc(_uid).update({
+        Constants.friendRequestUids:
+            FieldValue.arrayRemove([friendId])
+      });
+    } on FirebaseException catch (e) {
+      print(e.message);
+    }
+  }
+
+  Future<void> cancelFriendRequest({
+    required String? friendId,
+  }) async {
+    try {
+      // Remove uid from friend's friend request list
+      await _firestore
+          .collection(Constants.users)
+          .doc(friendId)
+          .update({
+        Constants.friendRequestUids: FieldValue.arrayRemove([_uid])
+      });
+      // Remove friend's ID from current user's sent friend request list
+      await _firestore.collection(Constants.users).doc(_uid).update({
+        Constants.sentFriendRequestUids:
+            FieldValue.arrayRemove([friendId])
+      });
+    } on FirebaseException catch (e) {
+      print("Error canceling friend request: ${e.message}");
+    }
+  }
+
+  Future<void> declineFriendRequest({
+    required String? friendId,
+  }) async {
+    try {
+      // Remove uid from friend's friend request list
+      await _firestore
+          .collection(Constants.users)
+          .doc(friendId)
+          .update({
+        Constants.sentFriendRequestUids: FieldValue.arrayRemove([_uid])
+      });
+      // Remove friend's ID from current user's sent friend request list
+      await _firestore.collection(Constants.users).doc(_uid).update({
+        Constants.friendRequestUids:
+        FieldValue.arrayRemove([friendId])
+      });
+    } on FirebaseException catch (e) {
+      print("Error canceling friend request: ${e.message}");
+    }
+  }
+
+
+  Future<void> unFriend({required String friendId}) async {
+    try {
+
+      await _firestore
+          .collection(Constants.users)
+          .doc(friendId)
+          .update({
+        Constants.friendUids: FieldValue.arrayRemove([_uid])
+      });
+      // Remove friend's ID from current user's sent friend request list
+      await _firestore.collection(Constants.users).doc(_uid).update({
+        Constants.friendUids:
+        FieldValue.arrayRemove([friendId])
+      });
+    } on FirebaseException catch (e) {
+      print("Error unfriending  friend : ${e.message}");
+    }
+
+  }
+
+  // get all users stream
+  Stream<QuerySnapshot> getAllUsersStream({required String userId}) =>
+      _firestore
+          .collection(Constants.users)
+          .where(Constants.uid, isNotEqualTo: userId)
+          .snapshots();
 
   Future<void> logout() async {
     await _auth.signOut();
@@ -316,4 +462,8 @@ class AuthenticationProvider extends ChangeNotifier {
     await shared.clear();
     notifyListeners();
   }
+
+
+
+//
 }

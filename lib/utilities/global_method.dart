@@ -46,3 +46,16 @@ Widget userImageWidget(
             imageUrl == '' ? AssetImage(AssetsManager.userImage) : NetworkImage(imageUrl!),
       ),
     );
+
+
+
+
+String toTitleCase(String text) {
+  if (text.isEmpty) return text;
+  return text
+      .split(' ') // Split the text into words
+      .map((word) => word.isNotEmpty
+      ? word[0].toUpperCase() + word.substring(1).toLowerCase()
+      : '') // Capitalize the first letter of each word
+      .join(' '); // Join the words back together
+}

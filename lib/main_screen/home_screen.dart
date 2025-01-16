@@ -1,13 +1,12 @@
-import 'package:adaptive_theme/adaptive_theme.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:new_chat_app/constant.dart';
 import 'package:new_chat_app/main_screen/chats_list_screen.dart';
 import 'package:new_chat_app/main_screen/group_screen.dart';
 import 'package:new_chat_app/main_screen/people_screen.dart';
-import 'package:new_chat_app/main_screen/setting_screens.dart';
 import 'package:new_chat_app/providers/authentication_provider.dart';
-import 'package:new_chat_app/utilities/assets_manager.dart';
+
 import 'package:new_chat_app/utilities/global_method.dart';
 import 'package:provider/provider.dart';
 

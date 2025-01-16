@@ -24,46 +24,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final uid = ModalRoute.of(context)!.settings.arguments as String;
     return Scaffold(
-      appBar: AppBar(centerTitle: true, title: Text('Profile'), actions: [
+      appBar:
+          AppBar(centerTitle: true, title: Text('Profile'), actions: [
         currentUser.uid == uid
             ? IconButton(
-                icon: Icon(Icons.logout),
+                icon: Icon(Icons.settings),
                 onPressed: () async {
-                  //create a method for log out
-                  //create a dialog to confirm log out
-
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Logout'),
-                      content: Text('Are you sure you want to log out?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () async {
-                            await currentUser.logout().whenComplete(() {
-                              // navigate to login screen
-
-                              navigateToLoginScreen();
-                            });
-                          },
-                          child: Text('Yes'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: Text('No'),
-                        ),
-                      ],
-                    ),
+                  Navigator.pushNamed(
+                    context,
+                    Constants.settingScreen,
+                    arguments: uid,
                   );
                 },
               )
             : SizedBox()
       ]),
       body: StreamBuilder<DocumentSnapshot>(
-        stream: context.read<AuthenticationProvider>().usersStream(userId: uid),
-        builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+        stream: context
+            .read<AuthenticationProvider>()
+            .usersStream(userId: uid),
+        builder: (BuildContext context,
+            AsyncSnapshot<DocumentSnapshot> snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Something went wrong'));
           }
@@ -75,10 +56,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return Text("User not found");
           }
-          final userModel =
-              UserModel.fromMap(snapshot.data!.data() as Map<String, dynamic>);
+          final userModel = UserModel.fromMap(
+              snapshot.data!.data() as Map<String, dynamic>);
 
-          Map<String, dynamic> data = snapshot.data!.data() as Map<String, dynamic>;
+          Map<String, dynamic> data =
+              snapshot.data!.data() as Map<String, dynamic>;
           return Column(
             children: [
               userImageWidget(
@@ -95,21 +77,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               SizedBox(height: 15),
-              Row(
+              Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: buildFriendRequestButton(
-                      currentUser: currentUser,
-                      userModel: userModel,
-                    ),
+                  buildFriendRequestButton(
+                    currentUser: currentUser,
+                    userModel: userModel,
                   ),
-                  Expanded(
-                    child: buildFriendsButton(
-                      currentUser: currentUser,
-                      userModel: userModel,
-                    ),
+                  SizedBox(height: 15),
+                  buildFriendsButton(
+                    currentUser: currentUser,
+                    userModel: userModel,
                   ),
                 ],
               ),
@@ -117,7 +96,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Divider(),
               Container(
                 width: double.maxFinite,
-                padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                padding: EdgeInsets.symmetric(
+                    vertical: 16, horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -141,46 +121,191 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
+              ListTile(
+                  leading: Icon(Icons.phone),
+                  title: Text(userModel.phoneNumber,
+                      style: GoogleFonts.openSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      )))
             ],
           );
         },
       ),
     );
   }
-Widget buildFriendRequestButton({
-  required AuthenticationProvider currentUser,
-  required UserModel userModel,
-}) {
-  return (currentUser.uid == userModel.uid && userModel.friendRequestUids.isNotEmpty)
-      ? _buildButton('View friend request', Colors.purple, () {})
-      : const SizedBox.shrink();
-}
 
-Widget buildFriendsButton({
-  required AuthenticationProvider currentUser,
-  required UserModel userModel,
-}) {
-  final isSameUser = currentUser.uid == userModel.uid;
-  final hasFriends = userModel.friendUids.isNotEmpty;
+  Widget buildFriendRequestButton({
+    required AuthenticationProvider currentUser,
+    required UserModel userModel,
+  }) {
+    if (currentUser.uid == userModel.uid &&
+        userModel.friendRequestUids.isNotEmpty) {
+      return _buildButton(
+          'View friend request', Colors.purple, () {});
+    } else {
+      return const SizedBox.shrink();
+    }
+  }
 
-  return _buildButton(
-    isSameUser && hasFriends ? 'View friends' : 'Send friend request',
-    Colors.blueAccent,
-    isSameUser && hasFriends ? () {} : () {/* Send friend request */},
-  );
-}
+  Widget buildFriendsButton({
+    required AuthenticationProvider currentUser,
+    required UserModel userModel,
+  }) {
+    if (currentUser.uid == userModel.uid &&
+        userModel.friendUids.isNotEmpty) {
+      return _buildButton('View friends', Colors.black45, () {
+        // Navigate to friends screen
+      });
+    } else {
+      if (currentUser.uid != userModel.uid) {
+        //show cancel friend request if the friend request
+        //else show send friend request
 
-Widget _buildButton(String text, Color color, VoidCallback action) {
-  return AppButton(
-    action: action,
-    textColor: Colors.white,
-    buttonBackground: color,
-    buttonText: text,
-    splashColor: color,
-  );
-}
+        String label = '';
+        final containFriendUid =
+            userModel.friendRequestUids.contains(currentUser.uid);
 
-void navigateToLoginScreen() {
-  Navigator.pushNamedAndRemoveUntil(context, Constants.loginScreen, (route) => false);
-}
+        if (containFriendUid) {
+          label = 'Cancel friend request';
+          return _buildButton(label, Colors.redAccent, () async {
+            // Send friend request
+
+            context
+                .read<AuthenticationProvider>()
+                .cancelFriendRequest(friendId: userModel.uid)
+                .whenComplete(() {
+              showSnackBar(context, 'friend request canceled');
+            });
+          });
+        } else if (userModel.sentFriendRequestUids
+            .contains(currentUser.uid)) {
+          return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child:
+                  _buildButton(
+                      'Accept',
+                      Colors.purple,
+                          () async {
+                        context
+                            .read<AuthenticationProvider>()
+                            .acceptFriendRequest(friendId: userModel.uid)
+                            .whenComplete(() {
+                          showSnackBar(context, 'You are now friend with ${userModel.name}');
+                        });
+                      })
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: _buildButton('Decline', Colors.red, () async {
+                    context
+                        .read<AuthenticationProvider>()
+                        .declineFriendRequest(friendId: userModel.uid)
+                        .whenComplete(() {
+                      showSnackBar(context, 'You reject ${userModel.name} request');
+                    });
+                  }),
+                ),
+              ]);
+        } else if (userModel.friendUids.contains(currentUser.uid)) {
+          return Row(
+            children: [
+              Expanded(
+                child: _buildButton(
+                    'Chat', Colors.green, () async {
+                
+                     
+                }),
+              ),
+
+
+              Expanded(
+                child: _buildButton(
+                    'Unfriend', Colors.red, () async {
+
+                  //create a dialog to confirm log out
+
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Comfirm Action'),
+                      content: Text('Are you sure you want to Unfriend ${userModel.name}'),
+                      actions: [
+                        TextButton(
+                          onPressed: () async {
+
+
+                            context
+                                .read<AuthenticationProvider>()
+                                .unFriend(friendId: userModel.uid)
+                                .whenComplete(() {
+                              showSnackBar(context, 'You are no longer friend with ${userModel.name}');
+                            });
+                          },
+                          child: Text('Yes'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: Text('No'),
+                        ),
+                      ],
+                    ),
+                  );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                }),
+              ),
+            ],
+          );
+
+        } else {
+          label = 'send friend request';
+          return _buildButton(label, Colors.blue, () async {
+            context
+                .read<AuthenticationProvider>()
+                .sendFriendRequest(friendId: userModel.uid)
+                .whenComplete(() {
+              showSnackBar(context, 'Freind request sent');
+            });
+          });
+        }
+      } else {
+        return const SizedBox.shrink();
+      }
+    }
+  }
+
+  Widget _buildButton(String text, Color color, VoidCallback action) {
+    return AppButton(
+      action: action,
+      textColor: Colors.white,
+      buttonBackground: color,
+      buttonText: text,
+      splashColor: color,
+    );
+  }
+
+  void navigateToLoginScreen() {
+    Navigator.pushNamedAndRemoveUntil(
+        context, Constants.loginScreen, (route) => false);
+  }
 }
