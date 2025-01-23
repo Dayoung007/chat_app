@@ -19,6 +19,10 @@ class UserInformationScreen extends StatefulWidget {
 
 class _UserInformationScreenState extends State<UserInformationScreen> {
   final TextEditingController _nameController = TextEditingController();
+
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+
   File? finalFileImage;
   String userImage = '';
 
@@ -39,6 +43,7 @@ class _UserInformationScreenState extends State<UserInformationScreen> {
   }
 
 void cropImage(filePath) async {
+    try {
     if (filePath != null) {
       CroppedFile? croppedFile = await ImageCropper().cropImage(
           sourcePath: filePath, maxHeight: 800, maxWidth: 800, compressQuality: 90);
@@ -50,6 +55,11 @@ void cropImage(filePath) async {
       } else {
         popTheDialog();
       }
+    }}catch (e){
+      print(
+        'this is $e'
+
+      );
     }
   }
 
@@ -74,51 +84,63 @@ void cropImage(filePath) async {
           horizontal: 16,
           vertical: 20,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Center(
-              child: finalFileImage != null
-                  ? DisplayUserImage(
-                      onPress: () {
-                        buildShowModalBottomSheet(context);
-                      },
-                      isImageFile: true,
-                      finalFileImage: finalFileImage,
-                    )
-                  : DisplayUserImage(
-                      onPress: () {
-                        buildShowModalBottomSheet(context);
-                      },
-                      isImageFile: false,
-                    ),
-            ),
-            const SizedBox(height: 48),
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Center(
+                child: finalFileImage != null
+                    ? DisplayUserImage(
+                        onPress: () {
+                          buildShowModalBottomSheet(context);
+                        },
+                        isImageFile: true,
+                        finalFileImage: finalFileImage,
+                      )
+                    : DisplayUserImage(
+                        onPress: () {
+                          buildShowModalBottomSheet(context);
+                        },
+                        isImageFile: false,
+                      ),
+              ),
+              const SizedBox(height: 48),
+              TextFormField(
+                controller: _nameController,
+                validator: (value) {
+                  if (value!.isEmpty  || value.length < 3) {
+                    return 'Name should be at least 3 characters long';
+                  } else {
+                    return null;
+                  }
+                },
+    onChanged: (value) {
+      _nameController.text = value;
+    },
+                decoration: InputDecoration(
+                  labelText: 'Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            AppButton(
-              action: () {
-                if (_nameController.text.isEmpty || _nameController.text.length < 3) {
-                  showSnackBar(context, 'Name should be at least 3 characters long');
-                  return;
-                } else {
-                  saveUserDataToFirestore();
-                }
-                //save the user to firestore
-              },
-              buttonText: 'Continue',
-              textColor: Colors.white,
-              buttonBackground: Colors.blueAccent,
-            )
-          ],
+              const SizedBox(height: 24),
+              AppButton(
+                action: () {
+          
+                    if (_formKey.currentState!.validate()) {
+                      saveUserDataToFirestore();
+                    }
+          
+                  //save the user to firestore
+                },
+                buttonText: 'Continue',
+                textColor: Colors.white,
+                buttonBackground: Colors.blueAccent,
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -161,34 +183,58 @@ void cropImage(filePath) async {
   // save user data to firestore
   Future<void> saveUserDataToFirestore() async {
     final _authProvider = context.read<AuthenticationProvider>();
-    UserModel userModel = UserModel(
-        name: _nameController.text.trim(),
-        uid: _authProvider.uid!,
-        phoneNumber: _authProvider.phoneNumber!,
-        image: '',
-        token: '',
-        aboutMe: 'Hey there, i am using this application',
-        lastSeen: '',
-        createdAt: '',
-        isOnline: true,
-        friendUids: [],
-        friendRequestUids: [],
-        sentFriendRequestUids: []);
 
+    // Trim and store the name
+    final String userName = _nameController.text.trim();
+
+    // Reference Firestore
+    final firestore = _authProvider.firestore;
+
+    // Check if the name exists
+    final querySnapshot = await firestore
+        .collection(Constants.users) // Replace with your Firestore collection name
+        .where(Constants.name, isEqualTo: userName)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      // Username already exists
+      showSnackBar(context, 'This username is already taken. Please choose another.');
+      return;
+    }
+
+    // Username doesn't exist, proceed to save
+    UserModel userModel = UserModel(
+      name: userName,
+      uid: _authProvider.uid!,
+      phoneNumber: _authProvider.phoneNumber!,
+      image: '',
+      token: '',
+      aboutMe: 'Hey there, I am using this application',
+      lastSeen: '',
+      createdAt: '',
+      isOnline: true,
+      friendUids: [],
+      friendRequestUids: [],
+      sentFriendRequestUids: [],
+    );
+
+    // Save user data to Firestore
     _authProvider.saveUserDataToFirestore(
-        userModel: userModel,
-        fileImage: finalFileImage,
-        onSuccess: () async {
-          showSnackBar(context, 'User data saved successfully');
-          await Future.delayed(const Duration(seconds: 1));
-          await _authProvider.saveUserDataToSharedPreferences();
-          navigateToHomeScreen();
-        },
-        onFail: () async {
-          showSnackBar(context, 'Failed to save user data');
-          await Future.delayed(const Duration(seconds: 1));
-        });
+      userModel: userModel,
+      fileImage: finalFileImage,
+      onSuccess: () async {
+        showSnackBar(context, 'User data saved successfully');
+        await Future.delayed(const Duration(seconds: 1));
+        await _authProvider.saveUserDataToSharedPreferences();
+        navigateToHomeScreen();
+      },
+      onFail: () async {
+        showSnackBar(context, 'Failed to save user data');
+        await Future.delayed(const Duration(seconds: 1));
+      },
+    );
   }
+
 
   void navigateToHomeScreen() {
     // Navigate to home screen and remove all routes

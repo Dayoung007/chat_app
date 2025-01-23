@@ -28,11 +28,24 @@ class Constants {
   static String chatScreen = '/chatScreen';
   static String profileScreen = '/profileScreen';
   static String settingScreen = '/settingScreen';
+  static String friendRequestScreen = '/friendQuestScreen';
+  static String friendScreen = '/friendScreen';
 
 
 
 
+  static String contactId = 'contactUid';
+  static String contactName = 'contactName';
+  static String contactNumber = 'contactNumber';
+  static String contactImage = 'contactImage';
+  static String groupId = 'groupId';
 
 
+
+
+}
+
+enum FriendViewType {
+  friends, friendRequest, groupView
 
 }

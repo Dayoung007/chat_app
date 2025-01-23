@@ -59,7 +59,7 @@ class _PeopleScreenState extends State<PeopleScreen> {
                 }
                 if (snapshot.data!.docs.isEmpty) {
                   return Center(child: Text('No users found',
-                  style: TextStyle(fontSize: 18)));
+                  style: TextStyle(fontSize: 18),),);
                 }
 
                 return ListView(
@@ -68,8 +68,6 @@ class _PeopleScreenState extends State<PeopleScreen> {
                     return ListTile(
                       leading: userImageWidget(
                           radius: 20, onTap: () {
-
-
                       }, imageUrl: data['image']),
                       onTap: () {
                         Navigator.pushNamed(

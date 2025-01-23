@@ -142,7 +142,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (currentUser.uid == userModel.uid &&
         userModel.friendRequestUids.isNotEmpty) {
       return _buildButton(
-          'View friend request', Colors.purple, () {});
+          'View friend request', Colors.purple, () {
+        Navigator.pushNamed(context, Constants.friendRequestScreen);
+      });
     } else {
       return const SizedBox.shrink();
     }
@@ -155,7 +157,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (currentUser.uid == userModel.uid &&
         userModel.friendUids.isNotEmpty) {
       return _buildButton('View friends', Colors.black45, () {
+
         // Navigate to friends screen
+        Navigator.pushNamed(context, Constants.friendScreen);
       });
     } else {
       if (currentUser.uid != userModel.uid) {
@@ -191,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           () async {
                         context
                             .read<AuthenticationProvider>()
-                            .acceptFriendRequest(friendId: userModel.uid)
+                            .acceptOrDeclineFriendRequest(friendId: userModel.uid, accept: true)
                             .whenComplete(() {
                           showSnackBar(context, 'You are now friend with ${userModel.name}');
                         });
@@ -202,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: _buildButton('Decline', Colors.red, () async {
                     context
                         .read<AuthenticationProvider>()
-                        .declineFriendRequest(friendId: userModel.uid)
+                        .acceptOrDeclineFriendRequest(friendId: userModel.uid, accept: false)
                         .whenComplete(() {
                       showSnackBar(context, 'You reject ${userModel.name} request');
                     });
@@ -215,6 +219,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Expanded(
                 child: _buildButton(
                     'Chat', Colors.green, () async {
+                      String emptyString = '';
+                  Navigator.pushNamed(
+                    context,
+                    Constants.chatScreen,
+                    arguments: {
+                      Constants.contactId: userModel.uid,
+                      Constants.contactName: userModel.name,
+                     Constants.contactImage: userModel.image,
+                      Constants.groupId : emptyString
+
+                    }
+                  );
                 
                      
                 }),
@@ -255,23 +271,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                 }),
               ),
             ],
